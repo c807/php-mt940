@@ -22,6 +22,7 @@ class Transaction implements \JsonSerializable
     private $valueTimestamp = 0;
     private $entryTimestamp = 0;
     private $transactionCode = '';
+    private $referenceAccountOwner = '';
 
     /**
      * @return array
@@ -104,6 +105,14 @@ class Transaction implements \JsonSerializable
     }
 
     /**
+     * @param string $var
+     */
+    public function setReferenceAccountOwner($var)
+    {
+        $this->referenceAccountOwner = (string)$var;
+    }
+
+    /**
      * @return string
      */
     public function getAccount()
@@ -178,6 +187,14 @@ class Transaction implements \JsonSerializable
     public function getTransactionCode()
     {
         return $this->transactionCode;
+    }
+
+    /**
+     * @return string
+     */
+    public function getReferenceAccountOwner()
+    {
+        return $this->referenceAccountOwner;
     }
 
     /**

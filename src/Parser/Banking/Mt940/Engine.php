@@ -29,9 +29,6 @@ abstract class Engine
         800 => Engine\Bunq::class,
         900 => Engine\Penta::class,
         1000 => Engine\Asn::class,
-        1100 => Engine\Kbs::class,
-        1200 => Engine\Zetb::class,
-        1300 => Engine\Kontist::class,
     ];
 
     /**
@@ -110,7 +107,7 @@ abstract class Engine
             }
         }
 
-        trigger_error('Unknown mt940 parser loaded, thus reverted to default');
+        // trigger_error('Unknown mt940 parser loaded, thus reverted to default');
 
         return new Engine\Unknown();
     }
@@ -162,6 +159,7 @@ abstract class Engine
                 $transaction->setValueTimestamp($this->parseTransactionValueTimestamp());
                 $transaction->setEntryTimestamp($this->parseTransactionEntryTimestamp());
                 $transaction->setTransactionCode($this->parseTransactionCode());
+                $transaction->setReferenceAccountOwner($this->parseTransactionReferenceAccountOwner());
                 $statement->addTransaction($transaction);
             }
             $results[] = $statement;
@@ -538,6 +536,22 @@ abstract class Engine
     }
 
     /**
+     * uses the 61 field to get the identification code after the transaction type.
+     *
+     * @return string
+     */
+    protected function parseTransactionReferenceAccountOwner()
+    {
+        $results = [];
+        if (preg_match('/^:61:\d{6}\d{4}[CD]\d{1,15},\d{0,2}N[A-Z]{3}(\d{6,})/m', $this->getCurrentTransactionData(), $results)
+            && !empty($results[1])
+        ) {
+            return trim($results[1]);
+        }
+        return '';        
+    }
+
+    /**
      * @param string $string
      *
      * @return string
@@ -594,7 +608,7 @@ abstract class Engine
         $date = \DateTime::createFromFormat($inFormat, $string);
         $date->setTime(0, 0);
         if ($date !== false) {
-            return (int) $date->format('U');
+            return (int)$date->format('U');
         }
 
         return 0;
@@ -617,7 +631,7 @@ abstract class Engine
      */
     protected function sanitizeDebitCredit($string)
     {
-        $debitOrCredit = strtoupper(substr((string) $string, 0, 1));
+        $debitOrCredit = strtoupper(substr((string)$string, 0, 1));
         if ($debitOrCredit !== Transaction::DEBIT && $debitOrCredit !== Transaction::CREDIT) {
             trigger_error('wrong value for debit/credit (' . $string . ')', E_USER_ERROR);
             $debitOrCredit = '';
@@ -635,6 +649,6 @@ abstract class Engine
     {
         $floatPrice = ltrim(str_replace(',', '.', strip_tags(trim($string))), '0');
 
-        return (float) $floatPrice;
+        return (float)$floatPrice;
     }
 }
